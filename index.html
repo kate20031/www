@@ -1,195 +1,216 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="pl">
-    <head>
-        <meta charset="UTF-8">
-        <title>Compiler</title>
-        <link rel="stylesheet" href="{% static 'website/style.css' %}">
-    </head>
-    <body>
-        <nav class="navbar">
-            <ul class="dropdown">
-                <li class="dropdown-item">
-                    <a id="light" href="#">Light</a>
-                </li>
-                <li class="dropdown-item">
-                    <a id="dark" href="#">Dark</a>
-                </li>
-            </ul>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Compiler</title>
+    <link rel="stylesheet" href="{% static 'website/style.css' %}">
+</head>
+
+<body>
+    <nav class="navbar">
+        <ul class="dropdown">
+            <li class="dropdown-item">
+                <a id="light" href="#">Light</a>
+            </li>
+            <li class="dropdown-item">
+                <a id="dark" href="#">Dark</a>
+            </li>
+        </ul>
+    </nav>
+    <script>
+        const darkButton = document.getElementById("dark");
+        const lightButton = document.getElementById("light");
+        const currentTheme = localStorage.getItem("theme");
+
+        if (currentTheme) {
+            document.body.setAttribute("data-theme", currentTheme);
+        }
+
+        function removeActive() {
+            for (const button of [darkButton, lightButton]) {
+                button.classList.remove("active-theme");
+            }
+        }
+
+        function openTab(tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            const tablinks = document.getElementsByClassName("tablinks");
+
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+
+            document.getElementById(tabName).style.display = "block";
+            event.currentTarget.classList.add("active");
+        }
+
+        darkButton.onclick = () => {
+            document.body.setAttribute("data-theme", "dark");
+            removeActive();
+            darkButton.classList.add("active-theme");
+            localStorage.setItem("theme", "dark");
+        };
+
+        lightButton.onclick = () => {
+            document.body.setAttribute("data-theme", "light");
+            removeActive();
+            lightButton.classList.add("active-theme");
+            localStorage.setItem("theme", "light");
+        };
+
+//         function chooseFile() {
+//             const xhttp = new XMLHttpRequest();
+//             xhttp.onload = function() {
+//                 document.getElementById("grid-container").innerHTML = this.responseText;
+//             }
+//             xhttp.open("GET", "/choose_file/");
+//             xhttp.send();
+//         }   
+        
+//         $(document).ready(function() {
+//     $('#upload-form').submit(function(e) {
+//         e.preventDefault();
+        
+//         var formData = new FormData(this);
+        
+//         $.ajax({
+//             url: "{% url 'choose_file' %}",
+//             type: "POST",
+//             data: formData,
+//             processData: false,
+//             contentType: false,
+//             success: function(response) {
+//                 $('#upload-status').html('<div class="alert alert-success">File uploaded successfully!</div>');
+//                 // Do something with the response data, such as updating other elements on the page
+//             },
+//             error: function(xhr, status, error) {
+//                 $('#upload-status').html('<div class="alert alert-danger">Error uploading file: ' + error + '</div>');
+//                 // Handle the error, display an error message, etc.
+//             }
+//         });
+//     });
+// });
+    </script>
+    <div class="grid-container">
+        <nav class="menu">
+            Menu
+            <!-- <a class="nav-link">
+                <button class="menu-item" onclick="document.getElementById('file1').click()">Plik</button>
+                <input type="file" id="file1" style="display:none;"> 
+            </a> -->
+            <a class="nav-link" href="{% url 'choose_file' %}">
+                <button class="menu-item">Plik</button>
+            </a>
+            <!-- <a class="nav-link" href="#" onclick="chooseFile()">
+                <button class="menu-item">Plik</button>
+            </a> -->
+            <a class="nav-link" href="{% url 'add_directory' %}">
+                <button class="menu-item">Dodaj katalog</button>
+            </a>
+            <button type="button" class="menu-item" onclick="compileFile()">Skompiluj plik</button>
+
+            <a class="nav-link" href="{% url 'login' %}">
+                <button class="menu-item">Załoguj się</button>
+            </a>
+
+            <a class="nav-link" href="{% url 'register_request' %}">
+                <button class="menu-item">Rejestracja </button>
+            </a>
         </nav>
-        <script>
-const darkButton = document.getElementById("dark");
-const lightButton = document.getElementById("light");
-const currentTheme = localStorage.getItem("theme");
-
-if (currentTheme) {
-document.body.setAttribute("data-theme", currentTheme);
-}
-
-function removeActive() {
-for (const button of [darkButton, lightButton]) {
-button.classList.remove("active-theme");
-}
-}
-
-function openTab(tabName) {
-const tabcontent = document.getElementsByClassName("tabcontent");
-
-for (let i = 0; i < tabcontent.length; i++) {
-tabcontent[i].style.display = "none";
-}
-
-const tablinks = document.getElementsByClassName("tablinks");
-
-for (let i = 0; i < tablinks.length; i++) {
-tablinks[i].classList.remove("active");
-}
-
-document.getElementById(tabName).style.display = "block";
-event.currentTarget.classList.add("active");
-}
-
-darkButton.onclick = () => {
-document.body.setAttribute("data-theme", "dark");
-removeActive();
-darkButton.classList.add("active-theme");
-localStorage.setItem("theme", "dark");
-};
-
-lightButton.onclick = () => {
-document.body.setAttribute("data-theme", "light");
-removeActive();
-lightButton.classList.add("active-theme");
-localStorage.setItem("theme", "light");
-};
-        </script>
-        <div class="grid-container">
-            <nav class="menu">
-                Menu
-                <a class="nav-link" href="{% url 'choose_file' %}">
-                    <button class="menu-item">Plik</button>
-                </a>
-    
-                <button class="menu-item">Opcja</button>
-                <a class="nav-link" href="{% url 'add_directory' %}">
-                    <button class="menu-item">Dodaj katalog</button>
-                </a>
-                <!-- <form method="POST" action="{% url 'compile_file' %}">
-                    {% csrf_token %} -->
-                    <!-- <input type="hidden" name="file_id" value="{{ file.id }}"> -->
-                    <!-- <button type="submit" class="menu-item">Skompiluj plik</button>
-                </form>   -->
-                <!-- <form action="{% url 'compile_file' %}" method="post">
-                    {% csrf_token %}
-                    <label for="file_id">Select a file:</label>
-                    <select name="file_id" id="file_id">
-                        {% for file in files %}
-                            <option value="{{ file.id }}">{{ file.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <br>
-                    <input type="submit" value="Compile">
-                </form> -->
-            </nav>
-            <!-- <form action="{% url 'compile_file' %}" method="post">
-                {% csrf_token %}
-                <label for="file_id">Select a file:</label>
-                <select name="file_id" id="file_id">
-                    {% for file in files %}
-                        <option value="{{ file.id }}">{{ file.name }}</option>
-                    {% endfor %}
-                </select>
-                <br>
-                <input type="submit" value="Compile"> -->
-            </form>
-
-            <nav class="files">
-                {% if documents_and_directories %}
-                <h2>Uploaded files and directories:</h2>
+        <nav class="files">
+            {% if documents_and_directories %}
+            <h2>Uploaded files and directories:</h2>
+            <ul>
+                {% for file in documents_and_directories %}
+                {% if file.type == 'file' %}
+                <li class="file-directory">
+                    <a href="?file_id={{ file.id }}" class="file-link" data-id="{{ file.id }}">{{ file.file.name }}</a>
+                    <form method="POST" action="{% url 'delete_document' file.id %}">
+                        {% csrf_token %}
+                        <button type="delete" class="file-delete-btn">Delete</button>
+                    </form>
+                </li>
+                {% elif file.type == 'directory' %}
+                {% if not file.parent_folder %}
+                <li class="file-directory">
+                    <strong>{{ file.name }}</strong>
+                    <form method="POST" action="{% url 'delete_directory' file.id %}">
+                        {% csrf_token %}
+                        <button type="delete" class="file-delete-btn">Delete</button>
+                    </form>
+                    {% endif %}
+                </li>
                 <ul>
-                    {% for file in documents_and_directories %}
-                    {% if file.type == 'file' %}
-                    <li class="file-directory">
-                        <a href="?file_id={{ file.id }}" class="file-link" data-id="{{ file.id }}">{{ file.file.name }}</a>
-                        <form method="POST" action="{% url 'delete_document' file.id %}">
+                    {% for subfile in file.get_files %}
+                    {% if subfile.type == 'file' %}
+                    <li>{{ subfile.file.name }}</li>
+                    {% elif subfile.type == 'directory' and subfile.is_deleted == False %}
+                    <li>
+                        <strong>{{ subfile.name }}</strong>
+                        <form method="POST" action="{% url 'delete_directory' subfile.id %}">
                             {% csrf_token %}
                             <button type="delete" class="file-delete-btn">Delete</button>
                         </form>
-                    </li>
-                    {% elif file.type == 'directory' %}
-                    {% if not file.parent_folder %}
-                    <li class="file-directory">
-                        <strong>{{ file.name }}</strong>
-                        <form method="POST" action="{% url 'delete_directory' file.id %}">
-                            {% csrf_token %}
-                            <button type="delete" class="directory-delete-btn">Delete</button>
-                        </form>
-                        {% endif %}
-                    </li>
-                    <ul>
-                        {% for subfile in file.get_files %}
-                            {% if subfile.type == 'file' %}
-                        <li>{{ subfile.file.name }}</li>
-                        {% elif subfile.type == 'directory'  and subfile.is_deleted == False %}
-                        <li>
-                            <strong>{{ subfile.name }}</strong>
-                            <form method="POST" action="{% url 'delete_directory' subfile.id %}">
-                                {% csrf_token %}
-                                <button type="delete" class="directory-delete-btn">Delete</button>
-                            </form>
-                            <ul>
-                                {% if subfile.parent_folder %}
-                                        {% for subsubfile in subfile.get_files %}
-                                            {% if subsubfile.type == 'file' and subsubfile.is_deleted == False %}
-                                <li>{{ subsubfile.file.name }}</li>
-                                {% elif subsubfile.type == 'directory' %}
-                                <li>
-                                    <strong>{{ subsubfile.name }}</strong>
-                                    <form method="POST" action="{% url 'delete_directory' subsubfile.id %}">
-                                        {% csrf_token %}
-                                        <button type="delete" class="directory-delete-btn">Delete</button>
-                                    </form>
-                                    <ul>
-                                        {% if subsubfile.parent_folder %}
-                                                            {% for subsubsubfile in subsubfile.get_files %}
-                                        <li>{{ subsubsubfile.file.name }}</li>
-                                        {% endfor %}
-                                                        {% endif %}
-                                    </ul>
-                                </li>
-                                {% endif %}
-                                        {% endfor %}
+                        <ul>
+                            {% if subfile.parent_folder %}
+                            {% for subsubfile in subfile.get_files %}
+                            {% if subsubfile.type == 'file' and subsubfile.is_deleted == False %}
+                            <li>{{ subsubfile.file.name }}</li>
+                            {% elif subsubfile.type == 'directory' %}
+                            <li>
+                                <strong>{{ subsubfile.name }}</strong>
+                                <form method="POST" action="{% url 'delete_directory' subsubfile.id %}">
+                                    {% csrf_token %}
+                                    <button type="delete" class="file-delete-btn">Delete</button>
+                                </form>
+                                <ul>
+                                    {% if subsubfile.parent_folder %}
+                                    {% for subsubsubfile in subsubfile.get_files %}
+                                    <li>{{ subsubsubfile.file.name }}</li>
+                                    {% endfor %}
                                     {% endif %}
-                            </ul>
-                        </li>
-                        {% endif %}
+                                </ul>
+                            </li>
+                            {% endif %}
                             {% endfor %}
-                    </ul>
-                </li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
                 {% endif %}
-            
                 {% endfor %}
-            </ul>
-            {% else %}
-            <p>No files or directories uploaded yet.</p>
-            {% endif %}
+                {% else %}
+                <p>No files or directories uploaded yet.</p>
+                {% endif %}
         </nav>
         <nav class="text">
-            {% if asm_file_content %}
-            <pre>{{ asm_file_content }}</pre>      
-            {% endif %}                      
-            <p>Tutaj będzie tekst programu</p>
+            {% if asm_file_content and contents %}
+            <h2>Assembly Code:</h2>
+            <pre>{{ asm_file_content }}</pre>
+            {% endif %}
+            {% if warning and contents %}
+            <pre>{{ warning }}</pre>
+            {% endif %}
         </nav>
         <div class="code">
             <code class="language-c">
-                {% if contents %}
-                    {% for i, section in sections_with_index %}
-                <div class="section">
-                    {{ section|linebreaksbr }}
-                </div>
-                {% endfor %}
-                {% endif %}
-            </code>
+                        {% if contents %}
+               {% for i, section in sections_with_index %}
+                        <div class="section">
+                            {{ section|linebreaksbr }}
+                        </div>
+                        {% endfor %}
+               {% endif %}
+                    </code>
         </div>
         <div class="tabs">
             <button class="tablinks" onclick="openTab('tab1')" data-tab="tab1">
@@ -213,112 +234,134 @@ localStorage.setItem("theme", "light");
                 Opcje zależne od procesora
             </button>
         </div>
-        <div id="tab1" class="tabcontent1">
-            <h3>Wybór procesora</h3>
-            <label for="processor">Procesor:</label>
-            <select id="processor" name="processor" onchange="updateDependentOptions()">
-                <option value="MCS51">MCS51</option>
-                <option value="Z80">Z80</option>
-                <option value="STM8">STM8</option>
-            </select>
-        </div>
-        <div id="tab2" class="tabcontent2">
-            <h3>Optymalizacje generowania</h3>
-            <label for="optimization">Optymalizacje:</label>
-            <select id="optimization" name="optimization" onchange="updateCompilerOptions()">
-                <option value="none">Brak optymalizacji</option>
-                <option value="fast">Szybka kompilacja</option>
-                <option value="size">Mały rozmiar pliku</option>
-                <option value="debug">Kod z debugowaniem</option>
-            </select>
-        </div>
-        <div id="tab3" class="tabcontent3">
-            <h3>Standard kodu źródłowego</h3>
-            <label for="standard">Standard:</label>
-            <select id="standard" name="standard" onchange="updateCompilerOptions()">
-                <option value="c89">C89</option>
-                <option value="c99">C99</option>
-                <option value="c11">C11</option>
-            </select>
-        </div>
-        <div id="tab4" class="tabcontent4">
-            <h3>Opcje zależne od procesora</h3>
-            <label for="dependent1">Zależna opcja 1:</label>
-            <select id="dependent1" name="dependent1" onchange="updateCompilerOptions()">
-                <option value="none">Brak</option>
-                <option value="small">Mały program</option>
-                <option value="medium">Średni program</option>
-                <option value="large">Duży program</option>
-            </select>
-        </div>
-        <script>
-          function updateDependentOptions() {
-            var processor = document.getElementById("processor").value;
-            
-            if (processor == "MCS51") {
-              document.getElementById("tab4").style.display = "none";
-            } else if (processor == "Z80") {
-              document.getElementById("tab4").style.display = "block";
-            } else if (processor == "STM8") {
-              document.getElementById("tab4").style.display = "none";
+        <form method="post" class="tabcontent1">
+            {% csrf_token %}
+            <div id="tab1" class="tabcontent1">
+                <h3>Wybór procesora</h3>
+                <label for="processor">Procesor:</label>
+                <select id="processor" name="processor" onchange="updateDependentOptions()">
+                    <option value="none">None</option>
+                    <option value="MCS51">MCS51</option>
+                    <option value="Z80">Z80</option>
+                    <option value="STM8">STM8</option>
+                </select>
+            </div>
+        </form>
+        <form method="post" class="tabcontent2">
+            <div id="tab2" class="tabcontent2">
+                <h3>Optymalizacje generowania</h3>
+                <label for="optimization">Optymalizacje:</label>
+                <select id="optimization" name="optimization" onchange="updateCompilerOptions()">
+                    <option value="none">Brak optymalizacji</option>
+                    <option value="fast">Szybka kompilacja</option>
+                    <option value="size" id="size_option">Mały rozmiar pliku</option>
+                    <option value="debug">Kod z debugowaniem</option>
+                </select>
+            </div>
+        </form>
+        <form method="post" class="tabcontent3">
+            <div id="tab3" class="tabcontent3">
+                <h3>Standard kodu źródłowego</h3>
+                <label for="standard">Standard:</label>
+                <select id="standard" name="standard" onchange="updateCompilerOptions()">
+                    <option value="none">None</option>
+                    <option value="c89">C89</option>
+                    <option value="c99">C99</option>
+                    <option value="c11">C11</option>
+                </select>
+            </div>
+        </form>
+        <form method="post" class="tabcontent4">
+            <div id="tab4" class="tabcontent4">
+                <h3>Opcje zależne od procesora</h3>
+                <select id="dependent1" name="dependent1" class="dependent1" onchange="updateCompilerOptions()">
+                    <option value="none">Brak</option>
+                    <option value="small">Mały program</option>
+                    <option value="medium">Średni program</option>
+                    <option value="large">Duży program</option>
+                </select>
+                <select id="dependent2" name="dependent2" onchange="updateCompilerOptions()">
+                    <option value="none">Brak</option>
+                    <option value="small">Mały program</option>
+                    <option value="medium">Średni program</option>
+                    <option value="large">Duży program</option>
+                    <option value="huge">Bardzo duży program</option>
+                </select>
+                <select id="dependent3" name="dependent3" onchange="updateCompilerOptions()">
+                    <option value="none">Brak</option>
+                    <option value="no_peep">No_peep</option>
+                    <option value="fomit_frame_pointer">Fomit_frame_pointer</option>
+                    <option value="inline_functions">Inline_functions</option>
+                </select>
+            </div>
+        </form>
+        <div id="output"></div>
+    </div>
+    <form method="get" action="/download_asm">
+        <input type="hidden" name="asm_content" value="{{ asm_file_content }}">
+        <button type="submit" class="download_asm">Download ASM File</button>
+    </form>
+    <form id="myform" method="post" action="{% url 'compile_file' %}" onsubmit="setSelectedOptions()">
+        {% csrf_token %}
+        <input type="hidden" name="file_id" id="fileIdInput" value="{{ file_id }}">
+        <input type="hidden" name="processor" id="processorInput" value="{{ processor }}">
+        <input type="hidden" name="optimization" id="optimizationInput" value="{{optimization}}">
+        <input type="hidden" name="standard" id="standardInput" value="{{standard}}">
+        <input type="hidden" name="dependent1" id="dependent1Input" value="{{dependent1}}">
+        <input type="hidden" name="dependent2" id="dependent2Input" value="{{dependent2}}">
+        <input type="hidden" name="dependent3" id="dependent3Input" value="{{dependent3}}">
+    </form>
+    <script>
+        function updateDependentOptions() {
+            const processor = document.getElementById("processor").value;
+            const dependent1 = document.getElementById("dependent1");
+            const dependent2 = document.getElementById("dependent2");
+            const dependent3 = document.getElementById("dependent3");
+            const sizeOption = document.getElementById("size_option");
+
+            if (processor === "MCS51") {
+                dependent1.style.display = "none";
+                dependent2.style.display = "block";
+                dependent3.style.display = "none";
+            } else if (processor === "STM8") {
+                dependent1.style.display = "none";
+                dependent2.style.display = "none";
+                dependent3.style.display = "block";
+            } else if (processor === "Z80") {
+                dependent1.style.display = "block";
+                dependent2.style.display = "none";
+                dependent3.style.display = "none";
             }
-          }
-          
-          function updateCompilerOptions() {
+
+            if (processor === "STM8") {
+                sizeOption.style.display = "block";
+            } else {
+                sizeOption.style.display = "none";
+            }
+        }
+
+        function setSelectedOptions() {
             var processor = document.getElementById("processor").value;
             var optimization = document.getElementById("optimization").value;
             var standard = document.getElementById("standard").value;
             var dependent1 = document.getElementById("dependent1").value;
-            
-            var compilerOptions = "";
-            
-            if (processor == "MCS51") {
-              compilerOptions = "-mmcs51";
-            } else if (processor == "Z80") {
-              compilerOptions = "-mz80";
-              if (dependent1 == "small") {
-                compilerOptions += " -Os";
-              } else if (dependent1 == "medium") {
-                compilerOptions += " -O2";
-              } else if (dependent1 == "large") {
-                compilerOptions += " -O3";
-              }
-            } else if (processor == "STM8") {
-              compilerOptions = "-mstm8";
-            }
-            
-            if (optimization == "fast") {
-              compilerOptions += " -O2";
-            } else if (optimization == "size") {
-              compilerOptions += " -Os";
-            } else if (optimization == "debug") {
-              compilerOptions += " -g";
-            }
-            
-            if (standard == "c89") {
-              compilerOptions += " -std=c89";
-            } else if (standard == "c99") {
-              compilerOptions += " -std=c99";
-            } else if (standard == "c11") {
-              compilerOptions += " -std=c11";
-            }
-            
-            document.getElementById("compiler_options").innerHTML = compilerOptions;
-          }
-        </script>
-        <div id="output"></div>
-    </div>
-</form>   
+            var dependent2 = document.getElementById("dependent2").value;
+            var dependent3 = document.getElementById("dependent3").value;
+            document.getElementById("processorInput").value = processor;
+            document.getElementById("optimizationInput").value = optimization;
+            document.getElementById("standardInput").value = standard;
+            document.getElementById("dependent1Input").value = dependent1;
+            document.getElementById("dependent2Input").value = dependent2;
+            document.getElementById("dependent3Input").value = dependent3;
+            updateDependentOptions();
+        }
+        function compileFile() {
+            setSelectedOptions();
+            document.getElementById("myform").submit();
+        }
+    </script>
 </body>
-
-
-<form id="myform" method="post" action="{% url 'compile_file' %}">
-    {% csrf_token %}
-    <input type="hidden" name="file_id" id="fileIdInput" value="{{ file_id }}">
-    <button type="submit" class="menu-item">Skompiluj plik</button>
 </form>
-
-
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const fileId = urlParams.get('file_id');
@@ -326,5 +369,4 @@ localStorage.setItem("theme", "light");
     fileIdInput.value = fileId;
 </script>
 
-</form>
 </html>
