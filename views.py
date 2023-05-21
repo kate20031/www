@@ -2,7 +2,7 @@ import glob
 import os
 import re
 import subprocess
-from django.template.loader import render_to_string
+# from django.template.loader import render_to_string
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -14,11 +14,12 @@ from .models import Directory
 from .forms import FileForm
 from django.http import HttpRequest
 from flask import Flask
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from .forms import NewUserForm
-from django.contrib.auth import login
+# from django.contrib.auth import login
 from django.contrib import messages
-from django.core.files.storage import default_storage
+# from django.core.files.storage import default_storage
+from django.core import serializers
 
 
 patterns = [
@@ -34,20 +35,6 @@ patterns = [
 def is_dir(path):
     return os.path.isdir(path)
 
-
-def show_files(request):
-    media_root = settings.MEDIA_ROOT
-    print("HEREEEEEE" + media_root)
-    files = []
-    for root, dirs, filenames in os.walk(media_root):
-        for filename in filenames:
-            files.append(os.path.join(root, filename))
-    for directory in dirs:
-        files.append(os.path.join(root, directory))
-    context = {"files": files}
-    return render(request, "index.html", context)
-
-
 def delete_directory(request, directory_id):
     directory = get_object_or_404(Directory, id=directory_id)
     directory.is_deleted = True
@@ -61,61 +48,29 @@ def delete_document(request, document_id):
     document.save()
     return redirect("index")
 
-def choose_file(request):
-    if request.method == "POST":
+
+def get_documents_and_directories(request):
+    directories = Directory.objects.filter(is_deleted=False)
+    documents = File.objects.filter(is_deleted=False)
+    documents_and_directories = list(documents) + list(directories)
+    serialized_data = serializers.serialize('json', documents_and_directories)
+    return JsonResponse({"documents_and_directories": serialized_data})
+
+def upload_file(request):
+    if request.method == 'POST':
         form = FileForm(request.POST, request.FILES)
         if form.is_valid():
-            file = File(file=request.FILES["file"])
-            file.save()
-            uploaded_file_path = file.file.name
-            sections = split_file_by_patterns(
-                "media/" + uploaded_file_path, patterns)
-            return redirect("/index2?sections={}".format("&".join(sections)))
-    else:
-        form = FileForm()
-    return render(request, "choose_file.html", {"form": form})
+            file = form.save()
+            directories = Directory.objects.filter(is_deleted=False)
+            documents = File.objects.filter(is_deleted=False)
+            documents_and_directories = list(documents) + list(directories)
+            serialized_data = serializers.serialize('json', documents_and_directories)
+            return JsonResponse({ 
+                "link": file.file.url,
+                "documents_and_directories": serialized_data
+            })
 
-# def choose_file(request):
-#     if request.method == "POST":
-#         form = FileForm(request.POST, request.FILES)
-#         if form.is_valid():
-#             file = File(file=request.FILES["file"])
-#             file.save()
-#             uploaded_file_path = file.file.name
-#             sections = split_file_by_patterns("media/" + uploaded_file_path, patterns)
-#             return JsonResponse({"status": "success", "sections": sections})
-#         else:
-#             return JsonResponse({"status": "error", "message": form.errors})
-#     else:
-#         form = FileForm()
-#     return render(request, "choose_file.html", {"form": form})
-
-
-
-# #     return HttpResponse('Failed')
-# from django.shortcuts import render
-# from django.http import JsonResponse
-# from django.views.decorators.csrf import ensure_csrf_cookie
  
-# @ensure_csrf_cookie
-# def upload_files(request):
-#     if request.method == "GET":
-#         return render(request, 'index.html', )
-#     if request.method == 'POST':
-#         files = request.FILES.getlist('files[]', None)
-#         for f in files:
-#             handle_uploaded_file(f)
-#         return JsonResponse({'msg':'<div class="alert alert-success" role="alert">File successfully uploaded</div>'})
-#     else:
-#         return render(request, 'index.html', )
-             
-# def handle_uploaded_file(f):  
-#     media_dir = os.path.join(settings.BASE_DIR, 'media')
-#     file_path = os.path.join(media_dir, f.name)
-#     with open(file_path, 'wb+') as destination:
-#         for chunk in f.chunks():
-#             destination.write(chunk)
-
 def add_directory(request):
     if request.method == "POST":
         form = DirectoryForm(request.POST)
@@ -123,7 +78,6 @@ def add_directory(request):
             name = form.cleaned_data["name"]
             parent_folder = form.cleaned_data["parent_folder"]
             if parent_folder:
-                # parent_folder_object = Directory.objects.filter(is_deleted=False, name = parent_folder)
                 parent_folder_path = os.path.join(
                     settings.MEDIA_ROOT, parent_folder.name
                 )
@@ -179,6 +133,12 @@ def index2(request):
         request.session["dependent1"] = dependent1
         request.session["dependent2"] = dependent2
         request.session["dependent3"] = dependent3
+
+    for item in documents_and_directories:
+        if isinstance(item, File):
+            print(item.file.name)
+        elif isinstance(item, Directory):
+            print(item.name)
 
     return render(
         request,
@@ -242,19 +202,19 @@ def folder_structure(request):
 
 
 def compile_file(request):
-    if request.method == "POST":
+    # if request.method == "POST":
 
-        files = glob.glob(os.path.join(settings.MEDIA_ROOT, "*.hex"))
-        if files:
-            os.remove(files[0])
+    files = glob.glob(os.path.join(settings.MEDIA_ROOT, "*.hex"))
+    if files:
+        os.remove(files[0])
 
-        file_id = request.POST.get("file_id")
-        processor = request.POST.get("processor")
-        optimization = request.POST.get("optimization")
-        standard = request.POST.get("standard")
-        dependent1 = request.POST.get("dependent1")
-        dependent2 = request.POST.get("dependent2")
-        dependent3 = request.POST.get("dependent3")
+    file_id = request.POST.get("file_id")
+    processor = request.POST.get("processor")
+    optimization = request.POST.get("optimization")
+    standard = request.POST.get("standard")
+    dependent1 = request.POST.get("dependent1")
+    dependent2 = request.POST.get("dependent2")
+    dependent3 = request.POST.get("dependent3")
 
 
     compiler_options = ""
@@ -312,10 +272,15 @@ def compile_file(request):
 
     if error_msg:
         request.session["warning"] = (
-            "Wystąpił błąd podczas kompilacji pliku.\n\n" + error_msg
+            "Wystąpił błąd podczas kompilacji.\n\n" + error_msg
         )
 
-    return redirect(request.META.get("HTTP_REFERER"))
+    response_data = {
+        "asm_code":  asm_code,
+        "warning": request.session.get("warning",  ""),
+    }
+    
+    return JsonResponse(response_data)
 
 
 def get_file_name_by_id(file_id):
