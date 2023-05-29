@@ -19,12 +19,13 @@
         </nav>
         <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
         <script>
-            function updateFileContainer() {
-                fetch('/index2')
-                    .then(response => response.text())
-                    .then(data => {
-                    document.getElementById('fileList').innerHTML = data;
-                    });
+            function updateDocumentsAndDirs() {
+                $.ajax({
+                    url: "/delete_document/",
+                    success: function(data) {
+                        $("#documentsAndDirectories").text(data);
+                    }
+                });
             }
 
             function uploadFile() {
@@ -42,25 +43,6 @@
                     document.getElementById('fileList').href = file_url;
                     getDocumentsAndDirectories();
                 })
-            }
-
-            function getDocumentsAndDirectories() {
-                fetch("/get_documents_and_directories/")
-                .then(response => response.json())
-                .then(data => {
-                    var documents_and_directories = JSON.parse(data.documents_and_directories);
-                    var documentsAndDirectoriesElement = document.getElementById("documentsAndDirectories");
-                    documentsAndDirectoriesElement.innerHTML = ""; 
-                    for (var i = 0; i < documents_and_directories.length; i++) {
-                        var item = documents_and_directories[i];
-                        var listItem = document.createElement("li");
-                        listItem.textContent = item.name; 
-                        documentsAndDirectoriesElement.appendChild(listItem);
-                    }
-                })
-                .catch(error => {
-                    console.error(error);
-                });
             }
 
             const darkButton = document.getElementById("dark");
@@ -144,11 +126,11 @@
                     {% for file in documents_and_directories %}
                         {% if file.type == 'file' %}
                     <li class="file-directory">
-                        <a href="?file_id={{ file.id }}" class="file-link" data-id="{{ file.id }}">{{ file.file.name }}</a>
+                        <button type="button"  onclick="showFile('{{file.id}}')" > {{ file.file.name }} </button>
                         <form method="POST" action="{% url 'delete_document' file.id %}">
                             {% csrf_token %}
                             <button type="delete" class="file-delete-btn">Delete</button>
-                        </form>
+                        </form>    
                     </li>
                     {% elif file.type == 'directory' %}
                             {% if not file.parent_folder %}
@@ -179,7 +161,8 @@
                                 {% elif subsubfile.type == 'directory' %}
                                 <li>
                                     <strong>{{ subsubfile.name }}</strong>
-                                    <form method="POST" action="{% url 'delete_directory' subsubfile.id %}">
+                                    <form method="POST" action="{% url 'delete_document' file.id %}"></form>
+                                    <!-- <form method="POST" action="{% url 'delete_directory' subsubfile.id %}"> -->
                                         {% csrf_token %}
                                         <button type="delete" class="file-delete-btn">Delete</button>
                                     </form>
@@ -211,14 +194,9 @@
                 <code id="warning"></code>
             </pre>
             <div class="code">
-                <code class="language-c">
-                    {% if contents %}
-               {% for i, section in sections_with_index %}
-                    <div class="section">
-                        {{ section|linebreaksbr }}
-                    </div>
-                    {% endfor %}
-               {% endif %}
+                </code>
+                <code id="sections_with_index">
+                        
                 </code>
             </div>
             <div class="tabs">
@@ -425,38 +403,44 @@
             });
         }
 
-        function deleteDocument(documentId) {
+
+        function showFile(file_id) {
             $.ajax({
-                url: '/documents/' + documentId + '/', 
+                url: '/file/' + file_id  + '/show/',
                 type: 'POST',
                 data: $('#myform').serialize(),
+                
                 success: function (response) {
-                    var asmCode = response.asm_code;
-                    var warning = response.warning;
-                    document.getElementById("asm_code").innerHTML = asmCode;
-                    document.getElementById("warning").innerHTML = warning;
-                }
+                    sections = document.getElementById("sections_with_index");
+                    sectionsFromResponse = response.sections_with_index;
+                    sections.innerHTML = '';
+
+                    for (var i = 0; i < sectionsFromResponse.length; i++) {
+                        section = sectionsFromResponse[i][1];
+                        sectionEl = document.createElement("div");
+                        sectionEl.className = "section";
+                        sectionEl.innerText = section;
+                        sections.appendChild(sectionEl);
+                    }          
+                },
             });
         }
 
-        function deleteDirectory() {
-            $.ajax({
-                url: '/delete_directory/<int:directory_id>/', 
-                type: 'POST',
-                data: $('#myform').serialize(),
-                success: function (response) {
-                    var asmCode = response.asm_code;
-                    var warning = response.warning;
-                    document.getElementById("asm_code").innerHTML = asmCode;
-                    document.getElementById("warning").innerHTML = warning;
-                }
-            });
-        }
+        // function deleteDocument(documentId) {
+        //     $.ajax({
+        //         url: '/documents/' + documentId + '/delete/', 
+        //         type: 'POST',
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileId = urlParams.get('file_id');
-        const fileIdInput = document.getElementById('fileIdInput');
-        fileIdInput.value = fileId;
+        //         success: function(data) {
+        //             ("#documentsAndDirectories").html(data);
+        //         }
+        //     });
+        // }
+
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const fileId = urlParams.get('file_id');
+        // const fileIdInput = document.getElementById('fileIdInput');
+        // fileIdInput.value = fileId;
         </script>
     </body>
 </form>

@@ -2,7 +2,6 @@ import glob
 import os
 import re
 import subprocess
-# from django.template.loader import render_to_string
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -14,39 +13,59 @@ from .models import Directory
 from .forms import FileForm
 from django.http import HttpRequest
 from flask import Flask
-# from django.contrib.auth.models import User
 from .forms import NewUserForm
-# from django.contrib.auth import login
 from django.contrib import messages
-# from django.core.files.storage import default_storage
 from django.core import serializers
 
 
 patterns = [
-    r"/\*[\s\S]*?\*/",  # Komentarze wielolinijkowe
-    r"//.*",  # Komentarze jednolinijkowe
-    # Dyrektywy preprocesora
-    r"#\s*(include|define|ifdef|ifndef|endif|if|else|elif|undef|pragma)\b",
-    # Słowa kluczowe
-    r"\b(const|char|short|int|long|float|double|void|struct|static|auto|volatile|signed|unsigned)\b",
+    r"/\*[\s\S]*?\*/", 
+    r"//.*",  
+    r"#\s*(include|define|ifdef|ifndef|endif|if|else|elif)\b",
+    r"\b(const|char|short|int|long|float|double|void)\b",
 ]
 
 
 def is_dir(path):
     return os.path.isdir(path)
 
-def delete_directory(request, directory_id):
-    directory = get_object_or_404(Directory, id=directory_id)
-    directory.is_deleted = True
-    directory.save()
-    return redirect("index")
+# def delete_directory(request, directory_id):
+#     directory = get_object_or_404(Directory, id=directory_id)
+#     directory.is_deleted = True
+#     directory.save()
+#     return redirect("index")
 
 
-def delete_document(request, document_id):
-    document = get_object_or_404(File, id=document_id)
-    document.is_deleted = True
-    document.save()
-    return redirect("index")
+# def delete_document(request, document_id):
+#     document = get_object_or_404(File, id=document_id)
+#     document.is_deleted = True
+#     document.save()
+    
+#     directories = Directory.objects.filter(is_deleted=False)
+#     documents = File.objects.filter(is_deleted=False)
+#     documents_and_directories = list(documents) + list(directories)
+#     document_list = []
+
+#     for document in documents_and_directories:
+#         if isinstance(document, File):
+#             document_dict = {
+#                 'id': document.id,
+#                 'name': document.file.name,
+#                 'type': 'file',
+#                 'is_deleted': document.is_deleted,
+#             }
+#         elif isinstance(document, Directory):
+#             document_dict = {
+#                 'id': document.id,
+#                 'name': document.name,
+#                 'type': 'directory',
+#                 'is_deleted': document.is_deleted,
+#             }
+        
+#         document_list.append(document_dict)
+
+#     return JsonResponse({"documents": document_list})
+
 
 
 def get_documents_and_directories(request):
@@ -100,24 +119,10 @@ def add_directory(request):
 def index2(request):
     directories = Directory.objects.filter(is_deleted=False)
     documents = File.objects.filter(is_deleted=False)
-    contents = None
-    sections_with_index = None
-    asm_file_content = request.session.get("asm_file_content", None)
-    warning = request.session.get("warning", None)
     documents_and_directories = list(documents) + list(directories)
 
     if not request.user.is_authenticated:
         return redirect("/accounts/login")
-
-    if "file_id" in request.GET:
-        file_id = request.GET["file_id"]
-        file = get_object_or_404(File, pk=file_id)
-        contents = file.file.read().decode()
-        sections = split_file_by_patterns(
-            os.path.join(settings.MEDIA_ROOT, str(file.file)), patterns
-        )
-        sections_with_index = [(i, section)
-                               for i, section in enumerate(sections)]
 
     if request.method == "POST":
         processor = request.POST.get("processor", "")
@@ -145,13 +150,45 @@ def index2(request):
         "index.html",
         {
             "documents_and_directories": documents_and_directories,
-            "warning": warning,
-            "contents": contents,
-            "sections_with_index": sections_with_index,
-            "asm_file_content": asm_file_content,
         },
     )
 
+def show_files(request):
+    directories = Directory.objects.filter(is_deleted=False)
+    documents = File.objects.filter(is_deleted=False)
+    documents_and_directories = list(documents) + list(directories)
+
+    if not request.user.is_authenticated:
+        return redirect("/accounts/login")
+
+    if request.method == "POST":
+        processor = request.POST.get("processor", "")
+        optimization = request.POST.get("optimization", "")
+        standard = request.POST.get("standard", "")
+        dependent1 = request.POST.get("dependent1", "")
+        dependent2 = request.POST.get("dependent2", "")
+        dependent3 = request.POST.get("dependent3", "")
+
+        request.session["processor"] = processor
+        request.session["optimization"] = optimization
+        request.session["standard"] = standard
+        request.session["dependent1"] = dependent1
+        request.session["dependent2"] = dependent2
+        request.session["dependent3"] = dependent3
+
+    for item in documents_and_directories:
+        if isinstance(item, File):
+            print(item.file.name)
+        elif isinstance(item, Directory):
+            print(item.name)
+
+    return render(
+        request,
+        "files.html",
+        {
+            "documents_and_directories": documents_and_directories,
+        },
+    )
 
 def split_file_by_patterns(file_path, patterns):
     sections = []
@@ -202,13 +239,10 @@ def folder_structure(request):
 
 
 def compile_file(request):
-    # if request.method == "POST":
-
     files = glob.glob(os.path.join(settings.MEDIA_ROOT, "*.hex"))
     if files:
         os.remove(files[0])
 
-    file_id = request.POST.get("file_id")
     processor = request.POST.get("processor")
     optimization = request.POST.get("optimization")
     standard = request.POST.get("standard")
@@ -216,9 +250,7 @@ def compile_file(request):
     dependent2 = request.POST.get("dependent2")
     dependent3 = request.POST.get("dependent3")
 
-
     compiler_options = ""
-
     if processor == "MCS51":
         compiler_options = "-mmcs51"
         if dependent2 == "small":
@@ -262,7 +294,7 @@ def compile_file(request):
     elif standard == "c11":
         compiler_options += " --std-c11"
 
-    file_id = request.POST.get("file_id")
+    file_id = request.session.get("file_id")
     asm_code, error_msg = process_file(file_id, compiler_options)
 
     if "warning" in request.session:
@@ -344,3 +376,34 @@ def register_request(request):
 		messages.error(request, "Unsuccessful registration. Invalid information.")
 	form = NewUserForm()
 	return render (request=request, template_name="registration/registration.html", context={"register_form":form})
+
+
+
+def show_file_content(request, file_id):
+    request.session['file_id'] = file_id
+    sections_with_index = None
+    file = get_object_or_404(File, pk=file_id)
+    
+
+    sections = split_file_by_patterns(
+        os.path.join(settings.MEDIA_ROOT, str(file.file)), patterns
+    )
+    sections_with_index = [(i, section)
+                        for i, section in enumerate(sections)]
+    response_data = {
+        "sections_with_index":sections_with_index, 
+    }
+            
+    return JsonResponse(response_data)
+
+def delete_document(request, document_id):
+    document = get_object_or_404(File, id=document_id)
+    document.is_deleted = True
+    document.save()
+    return redirect("index")
+
+def delete_directory(request, directory_id):
+    directory = get_object_or_404(Directory, id=directory_id)
+    directory.is_deleted = True
+    directory.save()
+    return redirect("index")
