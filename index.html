@@ -29,19 +29,33 @@
             }
 
             function uploadFile() {
-                var data = new FormData();
-                data.append("file", $("input[id^='file']")[0].files[0]);
-                data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+                // var data = new FormData();
+                // data.append("file", $("input[id^='file']")[0].files[0]);
+                // data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
 
-                fetch("/upload/", {
-                    method: "POST",
-                    body: data
-                })
-                .then(response => response.json())
-                .then(data => {
-                    var file_url = data.link;
-                    document.getElementById('fileList').href = file_url;
-                    getDocumentsAndDirectories();
+                // fetch("/upload/", {
+                //     method: "POST",
+                //     body: data
+                // })
+                // .then(response => response.json())
+                // .then(data => {
+                //     var file_url = data.link;
+                //     document.getElementById('fileList').href = file_url;
+                //     getDocumentsAndDirectories();
+                // })
+            respdonse = new XMLHttpRequest();
+            respdonse.open('POST', document.getElementById('delete-form-' + fileId).getAttribute('action'), true);
+            respdonse.setRequestHeader('X-CSRFToken',    '{{ csrf_token }}');
+            respdonse.onreadystatechange = function () {
+                window.location.reload
+            };
+            respdonse.send();
+
+            fetch("/index2").then(respdonse   => respdonse.text())  
+                .then (html => {
+                    document.open();
+                    document.write(html); 
+                    document.close();
                 })
             }
 
@@ -127,10 +141,10 @@
                         {% if file.type == 'file' %}
                     <li class="file-directory">
                         <button type="button"  onclick="showFile('{{file.id}}')" > {{ file.file.name }} </button>
-                        <form method="POST" action="{% url 'delete_document' file.id %}">
+                        <form id="delete-form-{{ file.id }}" method="POST" action="{% url 'delete_document' file.id %}">
                             {% csrf_token %}
-                            <button type="delete" class="file-delete-btn">Delete</button>
-                        </form>    
+                            <button type="button" class="file-delete-btn" onclick="deleteFile('{{ file.id }}')">Delete</button>
+                        </form>
                     </li>
                     {% elif file.type == 'directory' %}
                             {% if not file.parent_folder %}
@@ -162,7 +176,6 @@
                                 <li>
                                     <strong>{{ subsubfile.name }}</strong>
                                     <form method="POST" action="{% url 'delete_document' file.id %}"></form>
-                                    <!-- <form method="POST" action="{% url 'delete_directory' subsubfile.id %}"> -->
                                         {% csrf_token %}
                                         <button type="delete" class="file-delete-btn">Delete</button>
                                     </form>
@@ -426,21 +439,23 @@
             });
         }
 
-        // function deleteDocument(documentId) {
-        //     $.ajax({
-        //         url: '/documents/' + documentId + '/delete/', 
-        //         type: 'POST',
+        function deleteFile(fileId) {
+            respdonse = new XMLHttpRequest();
+            respdonse.open('POST', document.getElementById('delete-form-' + fileId).getAttribute('action'), true);
+            respdonse.setRequestHeader('X-CSRFToken',    '{{ csrf_token }}');
+            respdonse.onreadystatechange = function () {
+                window.location.reload
+            };
+            respdonse.send();
 
-        //         success: function(data) {
-        //             ("#documentsAndDirectories").html(data);
-        //         }
-        //     });
-        // }
+            fetch("/index2").then(respdonse   => respdonse.text())  
+                .then (html => {
+                    document.open();
+                    document.write(html); 
+                    document.close();
+                })
+        }
 
-        // const urlParams = new URLSearchParams(window.location.search);
-        // const fileId = urlParams.get('file_id');
-        // const fileIdInput = document.getElementById('fileIdInput');
-        // fileIdInput.value = fileId;
         </script>
     </body>
 </form>

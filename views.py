@@ -402,8 +402,3 @@ def delete_document(request, document_id):
     document.save()
     return redirect("index")
 
-def delete_directory(request, directory_id):
-    directory = get_object_or_404(Directory, id=directory_id)
-    directory.is_deleted = True
-    directory.save()
-    return redirect("index")
